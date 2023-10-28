@@ -267,6 +267,8 @@
         }
 
     </style>
+
+
 </head>
 
 <body>
@@ -306,12 +308,36 @@
     </thead>
     <tbody>
     <tr>
-        <td>当前温度</td>
-        <td id="temperature">17°C</td>
+        <td>空调状态</td>
+        <td id="condition_set">关机</td>
     </tr>
     <tr>
-        <td>当前价格</td>
+        <td>设定温度</td>
+        <td id="temperature_set">°C</td>
+    </tr>
+    <tr>
+        <td>室外温度</td>
+        <td id="temperature_out">40°C</td>
+    </tr>
+    <tr>
+        <td>冷热模式</td>
+        <td id="fan_model">制冷</td>
+    </tr>
+    <tr>
+        <td>风速</td>
+        <td id="fan_speed">高</td>
+    </tr>
+    <tr>
+        <td>费用</td>
         <td id="price">$99.99</td>
+    </tr>
+    <tr>
+        <td>当前时间</td>
+        <td id="current-time"></td>
+    </tr>
+     <tr>
+        <td>debug</td>
+        <td id="debug-info">10</td>
     </tr>
     </tbody>
 </table>
@@ -335,10 +361,13 @@
     var lowSpeedButton = document.querySelector(".low-speed");
     var mediumSpeedButton = document.querySelector(".medium-speed");
     var highSpeedButton = document.querySelector(".high-speed");
-    // 获取温度和价格的实际值，例如：
-    var currentTemperature = "25°C";
-    var currentPrice = "$129.99";
 
+    var temperature_setElement = document.getElementById("temperature_set");
+    var temperature_outElement = document.getElementById("temperature_out")
+    var fan_modelElement = document.getElementById("fan_model")
+    var fan_speedElement = document.getElementById("fan_speed")
+    var conditionsetElement = document.getElementById("condition_set")
+    var debug_infoElement = document.getElementById("debug-info")
 
     open.addEventListener('click', function () {
         if (temp == 0) {
@@ -349,6 +378,7 @@
             wind.style.opacity = 0;
             temp = 1;
             music.pause();
+            conditionsetElement.textContent = "关机"
         } else if (temp == 1) {
             open.style.backgroundColor = 'red';
             pattern.style.opacity = 1;
@@ -357,11 +387,13 @@
             wind.style.opacity = 1;
             temp = 0;
             music.play();
+            conditionsetElement.textContent = "开机"
         }
     })
     up.addEventListener('click', function () {
         if (num == 30) return;
         num++;
+        temperature_setElement.textContent = num + "°C";
         font.innerHTML = num + "°C";
         ding.load();
         ding.play();
@@ -369,6 +401,7 @@
     down.addEventListener('click', function () {
         if (num == 16) return;
         num--;
+        temperature_setElement.textContent = num + "°C";
         font.innerHTML = num + "°C";
         ding.load();
         ding.play();
@@ -378,35 +411,37 @@
         ding.play();
         music.load();
         music.play();
+        fan_modelElement.textContent = "制热"
+
     })
     snow.addEventListener('click', function () {
         pattern.src = "/static/img/snow.png";
         ding.play();
         music.load();
         music.play();
+        fan_modelElement.textContent = "制冷"
     })
 
     lowSpeedButton.addEventListener('click', function () {
         // 在这里添加低速风的控制逻辑
         // 可以在这里更新风速显示或播放声音
         ding.play();
+        fan_speedElement.textContent = "低速"
     });
 
     mediumSpeedButton.addEventListener('click', function () {
         // 在这里添加中速风的控制逻辑
         // 可以在这里更新风速显示或播放声音
         ding.play();
+        fan_speedElement.textContent = "中速"
     });
 
     highSpeedButton.addEventListener('click', function () {
         // 在这里添加高速风的控制逻辑
         // 可以在这里更新风速显示或播放声音
         ding.play();
+        fan_speedElement.textContent = "高速"
     });
-    // 更新表格中的数值
-    document.getElementById("temperature").textContent = currentTemperature;
-    document.getElementById("price").textContent = currentPrice;
-
     //向后端发送请求，后端对前端数据进行更改
     document.querySelector(".up").addEventListener('click', function () {
         // 向Django后端发送请求
@@ -421,7 +456,6 @@
                 console.error('请求失败: ', error);
             });
     });
-
     //将操作的信息向后端发送过去
     var clickdata = {
         click: "up"
@@ -442,6 +476,69 @@
                 console.error('请求失败: ', error);
             });
     });
+
+    const currentTimeElement = document.getElementById("current-time");
+
+    // 获取当前时间并更新显示
+    function updateTime() {
+        const now = new Date();
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
+        const timeString = `${hours}:${minutes}:${seconds}`;
+        currentTimeElement.textContent = timeString;
+    }
+
+    // 初始加载页面时更新时间
+    updateTime();
+    // 每隔一秒更新时间
+    setInterval(updateTime, 100);
+
+
+    // 创建WebSocket连接
+    socket = new WebSocket("ws://127.0.0.1:3404");
+    // 定义要发送的数据
+    function sendData() {
+        const dataToSend = {
+            temperature_set: temperature_setElement.textContent,
+            temperature_out: temperature_outElement.textContent,
+            fan_model: fan_modelElement.textContent,
+            fan_speed: fan_speedElement.textContent,
+            condition_set: conditionsetElement.textContent,
+            current_time: currentTimeElement.textContent,
+        };
+        // 发送数据
+        socket.send(JSON.stringify(dataToSend));
+    }
+    // 每隔一秒发送数据
+    // 在每次发送数据之后，更新调试信息
+    setInterval(function ()
+    {
+        sendData(); // 发送数据
+        // 更新调试信息
+        document.getElementById("debug-info").textContent = JSON.stringify(dataToSend, null, 2);
+    }, 1000);
+    // 监听WebSocket连接打开事件
+    socket.onopen = function (event) {
+        // 发送初始数据
+        debug_infoElement.textContent = "连接成功"
+        socket.send('hello wrold')
+        sendData();
+    };
+    // 处理WebSocket错误事件
+    socket.onerror = function (event) {
+        console.error('WebSocket错误：', event);
+    };
+    // 处理WebSocket关闭事件
+    socket.onclose = function (event) {
+        if (event.code === 1000) {
+            console.log('WebSocket连接已关闭。');
+        } else {
+            console.error('WebSocket连接关闭异常：', event);
+        }
+    };
+
+
 </script>
 </body>
 </html>
