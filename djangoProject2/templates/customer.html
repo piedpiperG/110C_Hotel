@@ -496,7 +496,7 @@
 
 
     // 创建WebSocket连接
-    socket = new WebSocket("ws://127.0.0.1:3404");
+    socket = new WebSocket("ws://127.0.0.1:3404/ws/some_path/");
     // 定义要发送的数据
     function sendData() {
         const dataToSend = {
@@ -522,7 +522,7 @@
     socket.onopen = function (event) {
         // 发送初始数据
         debug_infoElement.textContent = "连接成功"
-        socket.send('hello wrold')
+        socket.send(JSON.stringify({ message: 'hello world' }));
         sendData();
     };
     // 处理WebSocket错误事件

@@ -1,16 +1,19 @@
-"""
-ASGI config for hotel project.
-
-It exposes the ASGI callable as a module-level variable named ``application``.
-
-For more information on this file, see
-https://docs.djangoproject.com/en/4.2/howto/deployment/asgi/
-"""
+# hotel/asgi.py
 
 import os
-
 from django.core.asgi import get_asgi_application
+from channels.routing import ProtocolTypeRouter, URLRouter
+from channels.auth import AuthMiddlewareStack
+from django.urls import path
+from hotel.consumers import MyConsumer  # 确保导入了你的 Consumer
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "hotel.settings")
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'hotel.settings')
 
-application = get_asgi_application()
+application = ProtocolTypeRouter({
+    "http": get_asgi_application(),
+    "websocket": AuthMiddlewareStack(
+        URLRouter([
+            path("ws/some_path/", MyConsumer.as_asgi()),
+        ])
+    ),
+})
