@@ -2,5 +2,5 @@ from django.apps import AppConfig
 
 
 class AirConditionConfig(AppConfig):
-    default_auto_field = "django.db.models.BigAutoField"
-    name = "Air_Condition"
+    name = 'Air_Condition'
+    verbose_name = '分布式温控系统'

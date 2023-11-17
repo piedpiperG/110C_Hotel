@@ -37,6 +37,7 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     'channels',
+    'Air_Condition.apps.AirConditionConfig',
 ]
 
 # 设置 Channels 作为ASGI应用

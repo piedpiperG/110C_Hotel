@@ -19,7 +19,7 @@ from django.urls import path
 
 from django.contrib import admin
 from django.urls import include, path
-from Air_Condition.views import *
+# from Air_Condition.views import *
 from hotel.routing import application
 from django.urls import re_path
 
@@ -29,6 +29,6 @@ from hotel.routing import websocket_urlpatterns
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('socket/', websocket_view),  # 替换 'your_app' 为你的应用名
     path('ws/', include(websocket_urlpatterns)),
+
 ]
