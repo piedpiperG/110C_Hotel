@@ -4,3 +4,5 @@ from django.shortcuts import render
 from django.shortcuts import render
 
 
+def monitor_init(request):
+    return render(request, 'monitor.html')

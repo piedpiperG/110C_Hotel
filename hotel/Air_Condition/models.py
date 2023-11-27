@@ -718,6 +718,7 @@ class Server(models.Model):
         """
         self.fee = fee
 
+
 # 读取数据库用，读取信息，为前台生成账单，详单
 class StatisticController(models.Model):
     """
@@ -784,7 +785,7 @@ class StatisticController(models.Model):
                        "fee"]
 
         # 写入数据
-        with open("./result/detailed_list.csv", "w")as csvFile:
+        with open("./result/detailed_list.csv", "w") as csvFile:
             writer = csv.DictWriter(csvFile, file_header)
             writer.writeheader()
             # 写入的内容都是以列表的形式传入函数
@@ -945,7 +946,7 @@ class StatisticController(models.Model):
             data = []
             global report
             rows = []
-            for i in range(1,6):
+            for i in range(1, 6):
                 report = StatisticController.create_report(i, type_report, year, month, week)
                 data.append(list(report.values())[1:-2])
                 rows.append('room' + str(report['room_id']))
@@ -967,7 +968,7 @@ class StatisticController(models.Model):
             df = pd.DataFrame(data, columns=columns,
                               index=rows)
             # print(df)
-            df.plot(kind='barh', grid=True, colormap='YlGnBu', stacked=True,figsize=(15,5))  # 创建堆叠图
+            df.plot(kind='barh', grid=True, colormap='YlGnBu', stacked=True, figsize=(15, 5))  # 创建堆叠图
             print(data)
             data.reverse()
             table = plt.table(cellText=data,
@@ -994,3 +995,21 @@ class StatisticController(models.Model):
             plt.savefig('./result/report.png', dpi=300)
             # plt.show()
             # 不显示x轴标注
+
+
+from django.utils import timezone
+
+
+def current_time():
+    return timezone.now().time()
+
+
+class Message(models.Model):
+    room_id = models.IntegerField(default=0)
+    temperature_set = models.CharField(max_length=10, default='1')
+    temperature_out = models.CharField(max_length=10, default='0')
+    fan_model = models.CharField(max_length=20, default='制冷')
+    fan_speed = models.CharField(max_length=10, default='低速')
+    condition_set = models.CharField(max_length=10, default='关机')
+    current_time = models.TimeField()
+    timestamp = models.DateTimeField(auto_now_add=True)

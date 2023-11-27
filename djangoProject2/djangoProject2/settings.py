@@ -124,3 +124,19 @@ STATICFILES_DIRS = (
 )
 
 ASGI_APPLICATION = "djangoProject2.asgi.application"
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'loggers': {
+        '': {  # 这将应用于所有的日志记录器
+            'handlers': ['console'],
+            'level': 'INFO',  # 设置日志级别为 INFO
+        },
+    },
+}

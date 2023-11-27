@@ -335,7 +335,7 @@
         <td>当前时间</td>
         <td id="current-time"></td>
     </tr>
-     <tr>
+    <tr>
         <td>debug</td>
         <td id="debug-info">10</td>
     </tr>
@@ -497,9 +497,11 @@
 
     // 创建WebSocket连接
     socket = new WebSocket("ws://127.0.0.1:3404/ws/some_path/");
+
     // 定义要发送的数据
     function sendData() {
         const dataToSend = {
+            room_id: 1,
             temperature_set: temperature_setElement.textContent,
             temperature_out: temperature_outElement.textContent,
             fan_model: fan_modelElement.textContent,
@@ -510,10 +512,10 @@
         // 发送数据
         socket.send(JSON.stringify(dataToSend));
     }
+
     // 每隔一秒发送数据
     // 在每次发送数据之后，更新调试信息
-    setInterval(function ()
-    {
+    setInterval(function () {
         sendData(); // 发送数据
         // 更新调试信息
         document.getElementById("debug-info").textContent = JSON.stringify(dataToSend, null, 2);
@@ -522,7 +524,7 @@
     socket.onopen = function (event) {
         // 发送初始数据
         debug_infoElement.textContent = "连接成功"
-        socket.send(JSON.stringify({ message: 'hello world' }));
+        socket.send(JSON.stringify({message: 'hello world'}));
         sendData();
     };
     // 处理WebSocket错误事件
@@ -536,6 +538,16 @@
         } else {
             console.error('WebSocket连接关闭异常：', event);
         }
+    };
+    // 监听WebSocket消息事件
+    socket.onmessage = function (event) {
+        // 解析收到的JSON数据
+        const receivedData = JSON.parse(event.data);
+
+        // 在控制台中打印接收到的数据
+        console.log("Received data from server:", receivedData);
+        // 在页面中更新相关元素的内容，例如：
+        // 更新风速
     };
 
 
