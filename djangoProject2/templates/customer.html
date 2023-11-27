@@ -542,10 +542,11 @@
     // 监听WebSocket消息事件
     socket.onmessage = function (event) {
         // 解析收到的JSON数据
-        const receivedData = JSON.parse(event.data);
-
+        const receivedData = JSON.parse(event.data)
         // 在控制台中打印接收到的数据
         console.log("Received data from server:", receivedData);
+        const currentTemp = receivedData.current_temp;
+        temperature_outElement.textContent = currentTemp + "°C";
         // 在页面中更新相关元素的内容，例如：
         // 更新风速
     };

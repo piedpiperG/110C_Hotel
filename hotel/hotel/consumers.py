@@ -16,6 +16,18 @@ class MyConsumer(AsyncWebsocketConsumer):
         logger.info("WebSocket连接建立")
         await self.accept()
 
+        # 启动定期发送消息的任务
+        self.send_task = asyncio.create_task(self.send_message_periodically())
+
+    async def disconnect(self, close_code):
+        # 当WebSocket断开连接时，取消定期发送消息的任务
+        if self.send_task:
+            self.send_task.cancel()
+            try:
+                await self.send_task
+            except asyncio.CancelledError:
+                logger.info("定期发送消息的任务已取消")
+
     async def receive(self, text_data):
         if not text_data:
             logger.error("Empty message received")
@@ -64,7 +76,7 @@ class MyConsumer(AsyncWebsocketConsumer):
         while True:
             # 定时向客户端发送消息
             await self.send(text_data=json.dumps({
-                'message': 'Periodic message from server',
+                'current_temp': '20',
             }))
-            await asyncio.sleep(1)  # 休眠5秒，可以根据需求调整
-            logger.error('发送')
+            await asyncio.sleep(1)  # 根据需要调整休眠时间
+            # logger.info('发送周期性消息:20')
