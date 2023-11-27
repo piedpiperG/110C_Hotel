@@ -30,5 +30,32 @@ from hotel.routing import websocket_urlpatterns
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('ws/', include(websocket_urlpatterns)),
-    path('monitor/', monitor_init)
+    # path('', client_off),
+    # path('on/', client_on),
+
+    # 测试
+    # path('get/', get),
+    # path('der-post/', post),
+
+    # 客户端按钮
+    # path('power/', power),
+    # path('high/', change_high),
+    # path('mid/', change_mid),
+    # path('low/', change_low),
+    # path('up/', change_up),
+    # path('down/', change_down),
+
+    # 空调管理员
+    path('init/', init),
+    path('init_submit/', init_submit),
+    path('monitor/', monitor),
+
+    # 前台
+    path('recp/', reception_init),
+    path('recp_submit/', reception),
+
+    # 经理
+    path('manager/', manager),
+    path('manager_month/', manager_month),
+    path('manager_week/', manager_week),
 ]

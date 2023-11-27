@@ -389,6 +389,7 @@
             music.play();
             conditionsetElement.textContent = "开机"
         }
+        sendData('power')
     })
     up.addEventListener('click', function () {
         if (num == 30) return;
@@ -397,6 +398,7 @@
         font.innerHTML = num + "°C";
         ding.load();
         ding.play();
+        sendData('up')
     })
     down.addEventListener('click', function () {
         if (num == 16) return;
@@ -405,6 +407,7 @@
         font.innerHTML = num + "°C";
         ding.load();
         ding.play();
+        sendData('down')
     })
     sun.addEventListener('click', function () {
         pattern.src = "/static/img/sun.png";
@@ -412,7 +415,6 @@
         music.load();
         music.play();
         fan_modelElement.textContent = "制热"
-
     })
     snow.addEventListener('click', function () {
         pattern.src = "/static/img/snow.png";
@@ -427,6 +429,7 @@
         // 可以在这里更新风速显示或播放声音
         ding.play();
         fan_speedElement.textContent = "低速"
+        sendData('change_low')
     });
 
     mediumSpeedButton.addEventListener('click', function () {
@@ -434,6 +437,8 @@
         // 可以在这里更新风速显示或播放声音
         ding.play();
         fan_speedElement.textContent = "中速"
+        sendData('change_mid')
+
     });
 
     highSpeedButton.addEventListener('click', function () {
@@ -441,6 +446,8 @@
         // 可以在这里更新风速显示或播放声音
         ding.play();
         fan_speedElement.textContent = "高速"
+        sendData('change_high')
+
     });
     //向后端发送请求，后端对前端数据进行更改
     document.querySelector(".up").addEventListener('click', function () {
@@ -499,8 +506,9 @@
     socket = new WebSocket("ws://127.0.0.1:3404/ws/some_path/");
 
     // 定义要发送的数据
-    function sendData() {
+    function sendData(action) {
         const dataToSend = {
+            action: action,
             room_id: 1,
             temperature_set: temperature_setElement.textContent,
             temperature_out: temperature_outElement.textContent,
@@ -516,7 +524,7 @@
     // 每隔一秒发送数据
     // 在每次发送数据之后，更新调试信息
     setInterval(function () {
-        sendData(); // 发送数据
+        //sendData('null'); // 发送数据
         // 更新调试信息
         document.getElementById("debug-info").textContent = JSON.stringify(dataToSend, null, 2);
     }, 1000);
@@ -525,7 +533,7 @@
         // 发送初始数据
         debug_infoElement.textContent = "连接成功"
         socket.send(JSON.stringify({message: 'hello world'}));
-        sendData();
+        sendData('init');
     };
     // 处理WebSocket错误事件
     socket.onerror = function (event) {
