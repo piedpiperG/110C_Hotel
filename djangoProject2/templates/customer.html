@@ -398,7 +398,7 @@
         font.innerHTML = num + "°C";
         ding.load();
         ding.play();
-        sendData('up')
+        sendData('change_up')
     })
     down.addEventListener('click', function () {
         if (num == 16) return;
@@ -407,7 +407,7 @@
         font.innerHTML = num + "°C";
         ding.load();
         ding.play();
-        sendData('down')
+        sendData('change_down')
     })
     sun.addEventListener('click', function () {
         pattern.src = "/static/img/sun.png";

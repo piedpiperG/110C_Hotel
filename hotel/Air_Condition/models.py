@@ -9,6 +9,9 @@ from django.core.exceptions import ObjectDoesNotExist
 from datetime import datetime
 from django.db.models import Q
 import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 # 有关房间信息的数据库
@@ -98,6 +101,7 @@ class ServingQueue(models.Model):
         self.room_list.append(room)
         self.room_list.sort(key=lambda x: (x.fan_speed))  # 按照风速排序,服务队列中风速优先
         self.serving_num += 1
+        logger.info(f'insert room, room_id{room.room_id},room_fee{room.fee}')
         return True
 
     #  修改温度
@@ -380,6 +384,7 @@ class Scheduler(models.Model):
         :param target_temp:
         :return:
         """
+        logger.info('note3')
         if target_temp < 18:
             target_temp = 18
         if target_temp > 28:
@@ -619,104 +624,6 @@ class Scheduler(models.Model):
                 i += 1
         timer = threading.Timer(120, self.scheduling)  # 每2min执行一次调度函数
         timer.start()
-
-
-# 用于调度使用，每个服务对象服务一个房间
-class Server(models.Model):
-    """
-    名称：服务对象
-    作用：服务对象最多仅存在3个，每个服务对象对应一个房间，供调度算法以及温控使用。
-    """
-    STATE_CHOICE = [
-        (1, 'WORKING'),
-        (2, 'FREE'),
-    ]
-
-    # 服务对象的服务状态
-    state = models.IntegerField(verbose_name='服务状态', choices=STATE_CHOICE, default=2)
-
-    # 服务开始时间
-    start_time = models.DateField(verbose_name="创建时间", default=timezone.now)
-
-    # 服务对象的服务时长
-    serve_time = models.FloatField(verbose_name='服务时长')
-
-    # 服务对象所服务的房间号
-    room_id = models.IntegerField(verbose_name='服务房间号')
-
-    # 服务对象所服务房间的目标温度
-    target_temp = models.IntegerField(verbose_name='目标温度')
-
-    # 服务对象所服务房间的费用
-    fee = models.FloatField(verbose_name='费用')
-
-    # 服务对象所服务房间的费率
-    fee_rate = models.FloatField(verbose_name='费率')
-
-    # 服务对象所服务的房间的风速,默认值为2--middle
-    fan_speed = models.IntegerField(verbose_name='风速', default=2)
-
-    def set_attribute(self, room_id, start_time, current_room_temp):
-        """
-        服务对象的初始化，与某一个房间关联起来；
-        :param room_id:
-        :param start_time:
-        :param current_room_temp:
-        :return:
-        """
-        self.room_id = room_id
-        self.start_time = start_time
-        self.serve_time = 0.0
-        self.state = 1  # 状态为working
-        self.target_temp = 26
-        self.fan_speed = 2  # 默认为中速风2--middle
-        self.fee = 0.0
-        self.fee_rate = 0.8
-        return_list = [self.state, self.target_temp, self.fee_rate, self.fee]
-        return return_list
-
-    def change_target_temp(self, target_temp):
-        """
-        修改正在服务房间的目标温度
-        :param target_temp:
-        :return:
-        """
-        self.target_temp = target_temp
-        return True
-
-    def change_fan_speed(self, fan_speed):
-        """
-        修改正在服务房间的风速
-        :param fan_speed:
-        :return:
-        """
-        self.fan_speed = fan_speed
-        return True
-
-    def delete_server(self):
-        """
-        删除服务对象与被服务房间的关联
-        :return:
-        """
-        #  将信息写入数据库
-        # 。。。
-        self.room_id = 0  # 将服务对象设置为空闲
-        self.state = 2  # 状态为FREE
-        return self.fee
-
-    def set_serve_time(self):
-        """
-        修改服务时长
-        :return:
-        """
-        self.serve_time = timezone.now() - self.start_time
-
-    def set_fee(self, fee):
-        """
-        修改被服务房间的费用
-        :return:
-        """
-        self.fee = fee
 
 
 # 读取数据库用，读取信息，为前台生成账单，详单

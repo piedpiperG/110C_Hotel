@@ -8,7 +8,7 @@ from Air_Condition.models import Message
 from asgiref.sync import sync_to_async
 from datetime import datetime
 from django.core.exceptions import ValidationError
-from Air_Condition.models import Scheduler, Room, StatisticController
+from Air_Condition.models import Scheduler, Room
 from channels.db import database_sync_to_async
 
 logger = logging.getLogger(__name__)
@@ -63,8 +63,8 @@ class RoomsInfo:  # 监控器使用
 
 class RoomBuffer:  # 房间数据缓存
     on_flag = [None, False, False, False, False, False]
-    target_temp = [0, 25, 25, 25, 25, 25]  # 不要用数组。。。。
-    init_temp = [0, 32, 28, 30, 29, 35]
+    target_temp = [32, 25, 25, 25, 25, 25]  # 不要用数组。。。。
+    init_temp = [0, 30, 28, 30, 29, 35]
 
 
 class ChartData:
@@ -85,7 +85,6 @@ room_b = RoomBuffer
 speed_ch = ["", "高速", "中速", "低速"]
 state_ch = ["", "服务中", "等待", "关机", "休眠"]
 scheduler = Scheduler()  # 属于model模块
-sc = StatisticController
 
 
 # ===============================
@@ -120,6 +119,7 @@ class MyConsumer(AsyncWebsocketConsumer):
             # ---------------------------------------------------------------------------------------------#
             # 假设数据包含一个特定的动作
             action = data.get('action')
+            await self.init_sch(data)
             if action == 'init':
                 await self.get_room_id(data)
             if action == 'power':
@@ -156,6 +156,10 @@ class MyConsumer(AsyncWebsocketConsumer):
             return room_c.num
         else:
             return room_c.dic[s_id]
+
+    async def init_sch(self, data):
+        room_id = int(await self.get_room_id(data))
+        await self.async_update_state(room_id)
 
     async def power(self, data):
         room_id = int(await self.get_room_id(data))
@@ -194,6 +198,10 @@ class MyConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def async_request_on(self, room_id, init_temp):
         scheduler.request_on(room_id, init_temp)
+
+    @database_sync_to_async
+    def async_update_state(self, room_id):
+        scheduler.update_room_state(room_id)
 
     @database_sync_to_async
     def async_set_init_temp(self, room_id, init_temp):

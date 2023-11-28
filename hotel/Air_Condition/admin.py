@@ -1,6 +1,6 @@
 from django.contrib import admin
 # from .models import Scheduler
-from .models import ServingQueue, WaitingQueue, Server, Scheduler, Room, Message
+from .models import ServingQueue, WaitingQueue,  Scheduler, Room, Message
 # Register your models here.
 
 
@@ -12,7 +12,6 @@ class RoomAdmin(admin.ModelAdmin):
 admin.site.register(Scheduler)
 admin.site.register(ServingQueue)
 admin.site.register(WaitingQueue)
-admin.site.register(Server)
 admin.site.register(Room, RoomAdmin)
 admin.site.register(Message)
 
