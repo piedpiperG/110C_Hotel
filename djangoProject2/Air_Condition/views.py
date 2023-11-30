@@ -9,6 +9,17 @@ from django.http import JsonResponse
 def guest_init(request):
     return render(request, 'customer.html')
 
+def guest2_init(request):
+    return render(request, 'customer_2.html')
+
+def guest3_init(request):
+    return render(request, 'customer_3.html')
+
+def guest4_init(request):
+    return render(request, 'customer_4.html')
+
+def guest5_init(request):
+    return render(request, 'customer_5.html')
 
 def increase_temperature(request):
     # 在这里处理升温的逻辑

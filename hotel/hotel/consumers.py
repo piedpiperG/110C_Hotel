@@ -150,6 +150,7 @@ class MyConsumer(AsyncWebsocketConsumer):
         # 这里可以进行消息的发送或接收处理
 
         s_id = data.get('room_id')
+        logger.info(s_id)
         if s_id not in room_c.dic:
             room_c.num = room_c.num + 1
             room_c.dic[s_id] = room_c.num
@@ -202,6 +203,8 @@ class MyConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def async_update_state(self, room_id):
         scheduler.update_room_state(room_id)
+        scheduler.power_on()
+        scheduler.start_up()
 
     @database_sync_to_async
     def async_set_init_temp(self, room_id, init_temp):

@@ -21,7 +21,13 @@ from Air_Condition.views import *
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path('guest/', guest_init),
+    # path('guest/', guest_init),
+    path('', guest_init),
+    path('guest2', guest2_init),
+    path('guest3', guest3_init),
+    path('guest4', guest4_init),
+    path('guest5', guest5_init),
+
     path('increase_temperature/', increase_temperature),
     path('click_data/', click_data),
 ]

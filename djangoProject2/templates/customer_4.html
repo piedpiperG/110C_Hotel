@@ -1,0 +1,565 @@
+<!--
+ * @Author: your name
+ * @Date: 2021-05-10 23:11:44
+ * @LastEditTime: 2021-05-19 21:23:29
+ * @LastEditors: Please set LastEditors
+ * @Description: In User Settings Edit
+ * @FilePath: \undefinedd:\练习\小空调.html
+-->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小空调</title>
+    <style>
+        @font-face {
+            font-family: 'led regular';
+            src: url('/static/font/ds_digital/DS-DIGI.TTF');
+        }
+
+        * {
+            padding: 0;
+            margin: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: rgb(241, 241, 241);
+        }
+
+        .container {
+            position: relative;
+            width: 400px;
+            height: 500px;
+            /*  border: 1px solid rgb(201, 201, 201); */
+        }
+
+        .air {
+            position: relative;
+            margin: 0 auto;
+            width: 300px;
+            height: 120px;
+            background-color: rgb(255, 255, 255);
+            border-radius: 10px 10px 0 0;
+            filter: drop-shadow(0 2px 4px rgb(145, 145, 145));
+        }
+
+        .air::after {
+            content: '';
+            position: absolute;
+            bottom: -21px;
+            left: 0;
+            height: 20px;
+            width: 300px;
+            background-color: rgb(255, 255, 255);
+            border-radius: 0 0 20px 20px;
+        }
+
+        .picture {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 40px;
+            height: 65px;
+            border-radius: 5px;
+        }
+
+        .pattern {
+            position: absolute;
+            top: 25px;
+            right: 35px;
+            width: 20px;
+            height: 20px;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+
+        .font {
+            /* 引用LED字体 */
+            font-family: "led regular";
+            position: absolute;
+            right: 30px;
+            top: 45px;
+            width: 50px;
+            height: 30px;
+            line-height: 30px;
+            font-size: 25px;
+            color: rgb(184, 184, 184);
+            opacity: 0;
+            transition: all 0.3s;
+        }
+
+        .logo {
+            position: absolute;
+            left: 50%;
+            bottom: 3px;
+            transform: translateX(-50%);
+            font-size: 10px;
+            color: rgb(139, 139, 139);
+        }
+
+        .dot {
+            position: absolute;
+            bottom: -8px;
+            right: 12px;
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background-color: rgb(19, 221, 53);
+            z-index: 1;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+
+        .wind {
+            position: relative;
+            top: 30px;
+            width: 250px;
+            height: 60px;
+            margin: 0 auto;
+            opacity: 0;
+            transition: all 1.2s;
+            animation: move 1.5s ease-in-out infinite;
+        }
+
+        @keyframes move {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(5px);
+            }
+        }
+
+        .wind > span {
+            position: absolute;
+            width: 5px;
+            height: 40px;
+            background-color: rgb(206, 206, 206);
+
+        }
+
+        .wind1 {
+            left: 20%;
+            transform: rotate(20deg);
+        }
+
+        .wind2 {
+            left: 50%;
+        }
+
+        .wind3 {
+            left: 80%;
+            transform: rotate(-20deg);
+        }
+
+        .btn {
+            position: relative;
+            top: 50px;
+            margin: 0 auto;
+            width: 100px;
+            height: 150px;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .btn > div {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            font-size: 12px;
+            line-height: 35px;
+            text-align: center;
+            background-color: rgb(204, 204, 204);
+            box-shadow: 0 2px 4px rgb(151, 151, 151);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .btn > div:active {
+            background-color: rgb(240, 240, 240);
+        }
+
+        .sun, .snow, .open {
+            background-size: 50% 50%;
+            background-position: 50% 50%;
+            background-repeat: no-repeat;
+        }
+
+        .btn .sun {
+            background-image: url(/static/img/sun.png);
+            background-color: rgb(255, 130, 13);
+        }
+
+        .btn .snow {
+            background-image: url(/static/img/snow.png);
+            background-color: rgb(13, 138, 255);
+        }
+
+        .btn .open {
+            background-image: url(/static/img/open.png);
+            background-color: rgb(33, 255, 13);
+        }
+
+        .btn .low-speed,
+        .btn .medium-speed,
+        .btn .high-speed {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            font-size: 12px;
+            line-height: 35px;
+            text-align: center;
+            background-color: rgb(204, 204, 204);
+            box-shadow: 0 2px 4px rgb(151, 151, 151);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .btn .low-speed {
+            /* 设置低速风按钮的位置 */
+            position: absolute;
+            top: 0px; /* 距离顶部的距离 */
+            left: 130px; /* 距离左侧的距离 */
+        }
+
+        .btn .medium-speed {
+            /* 设置中速风按钮的位置 */
+            position: absolute;
+            top: 40px; /* 距离顶部的距离 */
+            left: 130px; /* 距离左侧的距离 */
+        }
+
+        .btn .high-speed {
+            /* 设置高速风按钮的位置 */
+            position: absolute;
+            top: 80px; /* 距离顶部的距离 */
+            left: 130px; /* 距离左侧的距离 */
+        }
+
+        .btn .low-speed::before {
+            /* 为低速风按钮添加文本 */
+            content: "低";
+        }
+
+        .btn .medium-speed::before {
+            /* 为中速风按钮添加文本 */
+            content: "中";
+        }
+
+        .btn .high-speed::before {
+            /* 为高速风按钮添加文本 */
+            content: "高";
+        }
+
+        .btn .low-speed:active,
+        .btn .medium-speed:active,
+        .btn .high-speed:active {
+            background-color: rgb(240, 240, 240);
+        }
+
+    </style>
+
+
+</head>
+
+<body>
+<!-- 底层盒子 -->
+<div class="container">
+    <div class="air">
+        <img src="/static/img/air-conditioning.png" alt="x" class="picture">
+        <img class="pattern" src="/static/img/snow.png" alt="x">
+        <span class="font">17°C</span>
+        <span class="logo">☁</span>
+        <span class="dot"></span>
+    </div>
+    <div class="wind">
+        <span class="wind1"></span>
+        <span class="wind2"></span>
+        <span class="wind3"></span>
+    </div>
+    <div class="btn">
+        <div class="up">▲</div>
+        <div class="down">▼</div>
+        <div class="sun"></div>
+        <div class="snow"></div>
+        <div class="open"></div>
+        <div class="low-speed"></div>
+        <div class="medium-speed"></div>
+        <div class="high-speed"></div>
+    </div>
+</div>
+
+<!-- 添加表格 -->
+<table>
+    <thead>
+    <tr>
+        <th>项目</th>
+        <th>数值</th>
+    </tr>
+    </thead>
+    <tbody>
+    <tr>
+        <td>空调状态</td>
+        <td id="condition_set">关机</td>
+    </tr>
+    <tr>
+        <td>设定温度</td>
+        <td id="temperature_set">°C</td>
+    </tr>
+    <tr>
+        <td>室外温度</td>
+        <td id="temperature_out">40°C</td>
+    </tr>
+    <tr>
+        <td>冷热模式</td>
+        <td id="fan_model">制冷</td>
+    </tr>
+    <tr>
+        <td>风速</td>
+        <td id="fan_speed">高</td>
+    </tr>
+    <tr>
+        <td>费用</td>
+        <td id="price">$99.99</td>
+    </tr>
+    <tr>
+        <td>当前时间</td>
+        <td id="current-time"></td>
+    </tr>
+    <tr>
+        <td>debug</td>
+        <td id="debug-info">10</td>
+    </tr>
+    </tbody>
+</table>
+
+<audio src="/static/img/open.mp3" class="music" loop></audio>
+<audio src="/static/img/12763.wav" class="ding"></audio>
+<script>
+    var open = document.querySelector(".open");
+    var sun = document.querySelector(".sun");
+    var snow = document.querySelector(".snow");
+    var up = document.querySelector(".up");
+    var down = document.querySelector(".down");
+    var pattern = document.querySelector(".pattern");
+    var font = document.querySelector(".font");
+    var dot = document.querySelector(".dot");
+    var wind = document.querySelector(".wind");
+    var music = document.querySelector(".music");
+    var ding = document.querySelector(".ding");
+    var temp = 1;
+    var num = 17;
+    var lowSpeedButton = document.querySelector(".low-speed");
+    var mediumSpeedButton = document.querySelector(".medium-speed");
+    var highSpeedButton = document.querySelector(".high-speed");
+
+    var temperature_setElement = document.getElementById("temperature_set");
+    var temperature_outElement = document.getElementById("temperature_out")
+    var fan_modelElement = document.getElementById("fan_model")
+    var fan_speedElement = document.getElementById("fan_speed")
+    var conditionsetElement = document.getElementById("condition_set")
+    var debug_infoElement = document.getElementById("debug-info")
+
+    open.addEventListener('click', function () {
+        if (temp == 0) {
+            open.style.backgroundColor = 'rgb(33, 255, 13)';
+            pattern.style.opacity = 0;
+            font.style.opacity = 0;
+            dot.style.opacity = 0;
+            wind.style.opacity = 0;
+            temp = 1;
+            music.pause();
+            conditionsetElement.textContent = "关机"
+        } else if (temp == 1) {
+            open.style.backgroundColor = 'red';
+            pattern.style.opacity = 1;
+            font.style.opacity = 1;
+            dot.style.opacity = 1;
+            wind.style.opacity = 1;
+            temp = 0;
+            music.play();
+            conditionsetElement.textContent = "开机"
+        }
+        sendData('power')
+    })
+    up.addEventListener('click', function () {
+        if (num == 30) return;
+        num++;
+        temperature_setElement.textContent = num + "°C";
+        font.innerHTML = num + "°C";
+        ding.load();
+        ding.play();
+        sendData('change_up')
+    })
+    down.addEventListener('click', function () {
+        if (num == 16) return;
+        num--;
+        temperature_setElement.textContent = num + "°C";
+        font.innerHTML = num + "°C";
+        ding.load();
+        ding.play();
+        sendData('change_down')
+    })
+    sun.addEventListener('click', function () {
+        pattern.src = "/static/img/sun.png";
+        ding.play();
+        music.load();
+        music.play();
+        fan_modelElement.textContent = "制热"
+    })
+    snow.addEventListener('click', function () {
+        pattern.src = "/static/img/snow.png";
+        ding.play();
+        music.load();
+        music.play();
+        fan_modelElement.textContent = "制冷"
+    })
+
+    lowSpeedButton.addEventListener('click', function () {
+        // 在这里添加低速风的控制逻辑
+        // 可以在这里更新风速显示或播放声音
+        ding.play();
+        fan_speedElement.textContent = "低速"
+        sendData('change_low')
+    });
+
+    mediumSpeedButton.addEventListener('click', function () {
+        // 在这里添加中速风的控制逻辑
+        // 可以在这里更新风速显示或播放声音
+        ding.play();
+        fan_speedElement.textContent = "中速"
+        sendData('change_mid')
+
+    });
+
+    highSpeedButton.addEventListener('click', function () {
+        // 在这里添加高速风的控制逻辑
+        // 可以在这里更新风速显示或播放声音
+        ding.play();
+        fan_speedElement.textContent = "高速"
+        sendData('change_high')
+
+    });
+    //向后端发送请求，后端对前端数据进行更改
+    document.querySelector(".up").addEventListener('click', function () {
+        // 向Django后端发送请求
+        fetch('/increase_temperature/', {method: 'GET'})
+            .then(response => response.json())
+            .then(data => {
+                // 更新前端温度显示
+                const temperatureElement = document.getElementById('temperature');
+                temperatureElement.textContent = data.new_temperature + "°C";
+            })
+            .catch(error => {
+                console.error('请求失败: ', error);
+            });
+    });
+    //将操作的信息向后端发送过去
+    var clickdata = {
+        click: "up"
+    };
+    document.querySelector(".up").addEventListener('click', function () {
+        fetch('/click_data/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(clickdata)
+        })
+            .then(response => response.json())
+            .then(data => {
+                // 处理后端的响应
+            })
+            .catch(error => {
+                console.error('请求失败: ', error);
+            });
+    });
+
+    const currentTimeElement = document.getElementById("current-time");
+
+    // 获取当前时间并更新显示
+    function updateTime() {
+        const now = new Date();
+        const hours = now.getHours().toString().padStart(2, '0');
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
+        const timeString = `${hours}:${minutes}:${seconds}`;
+        currentTimeElement.textContent = timeString;
+    }
+
+    // 初始加载页面时更新时间
+    updateTime();
+    // 每隔一秒更新时间
+    setInterval(updateTime, 100);
+
+
+    // 创建WebSocket连接
+    socket = new WebSocket("ws://127.0.0.1:3404/ws/some_path/");
+
+    // 定义要发送的数据
+    function sendData(action) {
+        const dataToSend = {
+            action: action,
+            room_id: 4,
+            temperature_set: temperature_setElement.textContent,
+            temperature_out: temperature_outElement.textContent,
+            fan_model: fan_modelElement.textContent,
+            fan_speed: fan_speedElement.textContent,
+            condition_set: conditionsetElement.textContent,
+            current_time: currentTimeElement.textContent,
+        };
+        // 发送数据
+        socket.send(JSON.stringify(dataToSend));
+    }
+
+    // 每隔一秒发送数据
+    // 在每次发送数据之后，更新调试信息
+    setInterval(function () {
+        //sendData('null'); // 发送数据
+        // 更新调试信息
+        document.getElementById("debug-info").textContent = JSON.stringify(dataToSend, null, 2);
+    }, 1000);
+    // 监听WebSocket连接打开事件
+    socket.onopen = function (event) {
+        // 发送初始数据
+        debug_infoElement.textContent = "连接成功"
+        socket.send(JSON.stringify({message: 'hello world'}));
+        sendData('init');
+    };
+    // 处理WebSocket错误事件
+    socket.onerror = function (event) {
+        console.error('WebSocket错误：', event);
+    };
+    // 处理WebSocket关闭事件
+    socket.onclose = function (event) {
+        if (event.code === 1000) {
+            console.log('WebSocket连接已关闭。');
+        } else {
+            console.error('WebSocket连接关闭异常：', event);
+        }
+    };
+    // 监听WebSocket消息事件
+    socket.onmessage = function (event) {
+        // 解析收到的JSON数据
+        const receivedData = JSON.parse(event.data)
+        // 在控制台中打印接收到的数据
+        console.log("Received data from server:", receivedData);
+        const currentTemp = receivedData.current_temp;
+        temperature_outElement.textContent = currentTemp + "°C";
+        // 在页面中更新相关元素的内容，例如：
+        // 更新风速
+    };
+
+
+</script>
+</body>
+</html>
