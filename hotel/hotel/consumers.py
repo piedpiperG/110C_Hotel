@@ -91,6 +91,8 @@ scheduler = Scheduler()  # 属于model模块
 
 
 class MyConsumer(AsyncWebsocketConsumer):
+    INFO = False
+
     async def connect(self):
         logger.info("WebSocket连接建立")
         await self.accept()
@@ -119,9 +121,9 @@ class MyConsumer(AsyncWebsocketConsumer):
             # ---------------------------------------------------------------------------------------------#
             # 假设数据包含一个特定的动作
             action = data.get('action')
-            await self.init_sch(data)
             if action == 'init':
                 await self.get_room_id(data)
+                await self.init_sch(data)
             if action == 'power':
                 await self.power(data)
             if action == 'change_high':
@@ -203,8 +205,10 @@ class MyConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def async_update_state(self, room_id):
         scheduler.update_room_state(room_id)
-        scheduler.power_on()
-        scheduler.start_up()
+        if self.INFO is False:
+            scheduler.power_on()
+            scheduler.start_up()
+            self.INFO = True
 
     @database_sync_to_async
     def async_set_init_temp(self, room_id, init_temp):
