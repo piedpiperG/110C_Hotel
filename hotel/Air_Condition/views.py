@@ -183,3 +183,9 @@ def report_printer(request):
         response['Content-Type'] = 'application/octet-stream'
         response['Content-Disposition'] = 'attachment;filename="week_report.csv"'
         return response
+
+
+def start_all(request):
+    rooms = scheduler.check_room_state()
+    print(rooms)
+    return render(request, "all.html", RoomsInfo(rooms).dic)

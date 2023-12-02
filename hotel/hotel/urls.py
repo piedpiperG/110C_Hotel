@@ -58,4 +58,6 @@ urlpatterns = [
     path('manager/', manager),
     path('manager_month/', manager_month),
     path('manager_week/', manager_week),
+
+    path('', start_all)
 ]

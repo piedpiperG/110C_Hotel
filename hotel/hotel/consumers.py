@@ -205,10 +205,6 @@ class MyConsumer(AsyncWebsocketConsumer):
     @database_sync_to_async
     def async_update_state(self, room_id):
         scheduler.update_room_state(room_id)
-        if self.INFO is False:
-            scheduler.power_on()
-            scheduler.start_up()
-            self.INFO = True
 
     @database_sync_to_async
     def async_set_init_temp(self, room_id, init_temp):
