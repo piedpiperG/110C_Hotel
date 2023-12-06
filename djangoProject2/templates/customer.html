@@ -277,7 +277,7 @@
     <div class="air">
         <img src="/static/img/air-conditioning.png" alt="x" class="picture">
         <img class="pattern" src="/static/img/snow.png" alt="x">
-        <span class="font">17°C</span>
+        <span class="font">25°C</span>
         <span class="logo">☁</span>
         <span class="dot"></span>
     </div>
@@ -316,7 +316,7 @@
         <td id="temperature_set">°C</td>
     </tr>
     <tr>
-        <td>室外温度</td>
+        <td>当前温度</td>
         <td id="temperature_out">40°C</td>
     </tr>
     <tr>
@@ -332,12 +332,16 @@
         <td id="price">$99.99</td>
     </tr>
     <tr>
+        <td>费率</td>
+        <td id="price_rate">0.5</td>
+    </tr>
+    <tr>
         <td>当前时间</td>
         <td id="current-time"></td>
     </tr>
     <tr>
-        <td>debug</td>
-        <td id="debug-info">10</td>
+        <td>连接状态</td>
+        <td id="debug-info">未连接</td>
     </tr>
     </tbody>
 </table>
@@ -368,6 +372,8 @@
     var fan_speedElement = document.getElementById("fan_speed")
     var conditionsetElement = document.getElementById("condition_set")
     var debug_infoElement = document.getElementById("debug-info")
+    var fee_Element = document.getElementById("price")
+    var feerate_Element = document.getElementById("price_rate")
 
     open.addEventListener('click', function () {
         if (temp == 0) {
@@ -382,6 +388,7 @@
         } else if (temp == 1) {
             open.style.backgroundColor = 'red';
             pattern.style.opacity = 1;
+            pattern.src = "/static/img/sun.png";
             font.style.opacity = 1;
             dot.style.opacity = 1;
             wind.style.opacity = 1;
@@ -392,19 +399,15 @@
         sendData('power')
     })
     up.addEventListener('click', function () {
-        if (num == 30) return;
         num++;
-        temperature_setElement.textContent = num + "°C";
-        font.innerHTML = num + "°C";
+        font.innerHTML = temperature_setElement.textContent + "°C";
         ding.load();
         ding.play();
         sendData('change_up')
     })
     down.addEventListener('click', function () {
-        if (num == 16) return;
         num--;
-        temperature_setElement.textContent = num + "°C";
-        font.innerHTML = num + "°C";
+        font.innerHTML = temperature_setElement.textContent + "°C";
         ding.load();
         ding.play();
         sendData('change_down')
@@ -429,6 +432,7 @@
         // 可以在这里更新风速显示或播放声音
         ding.play();
         fan_speedElement.textContent = "低速"
+        feerate_Element.textContent = "0.33"
         sendData('change_low')
     });
 
@@ -437,6 +441,7 @@
         // 可以在这里更新风速显示或播放声音
         ding.play();
         fan_speedElement.textContent = "中速"
+        feerate_Element.textContent = "0.5"
         sendData('change_mid')
 
     });
@@ -446,6 +451,7 @@
         // 可以在这里更新风速显示或播放声音
         ding.play();
         fan_speedElement.textContent = "高速"
+        feerate_Element.textContent = "1"
         sendData('change_high')
 
     });
@@ -503,7 +509,7 @@
 
 
     // 创建WebSocket连接
-    socket = new WebSocket("ws://127.0.0.1:3404/ws/some_path/");
+    socket = new WebSocket("ws://10.29.84.40:80/ws/some_path/");
 
     // 定义要发送的数据
     function sendData(action) {
@@ -553,10 +559,30 @@
         const receivedData = JSON.parse(event.data)
         // 在控制台中打印接收到的数据
         console.log("Received data from server:", receivedData);
+
+
         const currentTemp = receivedData.current_temp;
-        temperature_outElement.textContent = currentTemp + "°C";
-        // 在页面中更新相关元素的内容，例如：
-        // 更新风速
+        const fan_speed = receivedData.fan_speed
+        const fee = receivedData.fee
+        const room_id = receivedData.room_id
+        const state = receivedData.state
+        const target_temp = receivedData.target_temp
+
+        // 在页面中更新相关元素的内容
+        for(let i=1;i<=5;i++)
+        {
+            if(room_id[i]===1)
+            {
+                temperature_outElement.textContent = currentTemp[i] + "°C";
+                fan_speedElement.textContent = fan_speed[i]
+                conditionsetElement.textContent = state[i]
+                fee_Element.textContent = fee[i]
+                temperature_setElement.textContent = target_temp[i]
+
+                font.innerHTML = temperature_setElement.textContent + "°C";
+
+            }
+        }
     };
 
 

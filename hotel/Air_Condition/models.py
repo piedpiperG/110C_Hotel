@@ -101,7 +101,7 @@ class ServingQueue(models.Model):
         self.room_list.append(room)
         self.room_list.sort(key=lambda x: (x.fan_speed))  # 按照风速排序,服务队列中风速优先
         self.serving_num += 1
-        logger.info(f'insert room, room_id{room.room_id},room_fee{room.fee}')
+        # logger.info(f'insert room, room_id{room.room_id},room_fee{room.fee}')
         return True
 
     #  修改温度

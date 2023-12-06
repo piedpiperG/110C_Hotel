@@ -21,8 +21,6 @@ room_b = RoomBuffer
 
 
 # ============================管理员=============================
-def init(request):
-    return render(request, 'init.html')
 
 
 def init_submit(request):
@@ -40,31 +38,17 @@ def init_submit(request):
     scheduler.set_para(high, low, default, fee_h, fee_l, fee_m)
     scheduler.power_on()
     scheduler.start_up()
-    return HttpResponseRedirect('/monitor')
+    # return HttpResponseRedirect('/monitor')
+    return HttpResponseRedirect('/all')
 
 
-def monitor(request):
-    rooms = scheduler.check_room_state()
-    print(rooms)
-    return render(request, 'monitor.html', RoomsInfo(rooms).dic)
-
-
-def tst(request):
-    dic = {
-        "room_id": 1,
-        "state": "挂起",
-        "fan_speed": "高速",
-        "current_temp": 28,
-        "fee": 2,
-        "target_temp": 25,
-        "fee_rate": 0.5
-    }
-    return render(request, 'monitor.html')
+# def monitor(request):
+#     rooms = scheduler.check_room_state()
+#     print(rooms)
+#     return render(request, 'monitor.html', RoomsInfo(rooms).dic)
 
 
 # ===============================前台==============================
-def reception_init(request):
-    return render(request, 'reception.html')
 
 
 def reception(request):
@@ -106,8 +90,6 @@ def reception(request):
 
 
 # =========================经理==========================
-def manager(request):
-    return render(request, "report.html")
 
 
 def manager_month(request):
@@ -187,5 +169,9 @@ def report_printer(request):
 
 def start_all(request):
     rooms = scheduler.check_room_state()
-    print(rooms)
     return render(request, "all.html", RoomsInfo(rooms).dic)
+
+
+def start_all2(request):
+    rooms = scheduler.check_room_state()
+    return render(request, "all_2.html", RoomsInfo(rooms).dic)

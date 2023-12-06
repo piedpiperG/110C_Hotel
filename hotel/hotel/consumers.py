@@ -156,9 +156,9 @@ class MyConsumer(AsyncWebsocketConsumer):
         if s_id not in room_c.dic:
             room_c.num = room_c.num + 1
             room_c.dic[s_id] = room_c.num
-            return room_c.num
+            return int(s_id)
         else:
-            return room_c.dic[s_id]
+            return int(s_id)
 
     async def init_sch(self, data):
         room_id = int(await self.get_room_id(data))
@@ -252,12 +252,14 @@ class MyConsumer(AsyncWebsocketConsumer):
 
     async def send_message_periodically(self):
         while True:
-            # room_id = get_room_id(request)
-            # room = scheduler.update_room_state(room_id)
-
-            # 定时向客户端发送消息
-            await self.send(text_data=json.dumps({
-                'current_temp': '20',
-            }))
-            await asyncio.sleep(1)  # 根据需要调整休眠时间
+            rooms = scheduler.check_room_state()
             # logger.info('发送周期性消息:20')
+            rooms_info = RoomsInfo(rooms).dic  # 获取房间信息的字典
+            # logger.info(f'send_data:{rooms_info}')
+            # 定时向客户端发送消息
+            try:
+                await self.send(text_data=json.dumps(rooms_info))
+            except Exception as e:
+                logger.error(f"Error sending message: {e}")
+            await asyncio.sleep(1)  # 根据需要调整休眠时间
+            # logger.info('发送周期性消息:10')
