@@ -6,20 +6,25 @@ import django
 from django.http import HttpResponse
 import csv
 from django.core.exceptions import ObjectDoesNotExist
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.db.models import Q
 import os
 import logging
+import pandas as pd
 
 logger = logging.getLogger(__name__)
 
+# 新增 获取当前时间
+def time_now():
+    time = timezone.now() + timedelta(hours=8)
+    return time
 
 # 有关房间信息的数据库
 class Room(models.Model):
     FAN_SPEED = [
-        (3, "HIGH"),
+        (3, "LOW"),
         (2, "MIDDLE"),
-        (1, "LOW"),
+        (1, "HIGH"),
     ]
 
     ROOM_STATE = [
@@ -40,10 +45,20 @@ class Room(models.Model):
     request_id = models.IntegerField(verbose_name="请求号", primary_key=True, default=0)
 
     # 请求发出时间
-    request_time = models.DateTimeField(verbose_name="请求发出时间", default=django.utils.timezone.now)
+    request_time = models.DateTimeField(verbose_name="请求发出时间", default=time_now)
 
     # 房间号，唯一表示房间
     room_id = models.IntegerField(verbose_name="房间号", default=0)
+
+    # 新增字段：服务开始时间
+    serve_start_time = models.DateTimeField(verbose_name="服务开始时间", null=True, blank=True)
+
+    # 新增字段：服务结束时间
+    serve_end_time = models.DateTimeField(verbose_name="服务结束时间", null=True, blank=True)
+
+    # 新增字段：服务时长
+    serve_duration = models.IntegerField(verbose_name="服务时长", default=0)
+
 
     # 当前温度
     current_temp = models.FloatField(verbose_name="当前温度", default=0.0)
@@ -78,6 +93,57 @@ class Room(models.Model):
     # 调度次数
     scheduling_num = models.IntegerField(verbose_name='调度次数', default=0)
 
+    
+    def serve_duration_times(self):
+        # 秒数
+        seconds = self.serve_duration
+
+        # 创建一个timedelta对象
+        tdelta = timedelta(seconds=seconds)
+
+        # 将timedelta对象转换为时间元组
+        hours, remainder = divmod(tdelta.seconds, 3600)
+        minutes, seconds = divmod(remainder, 60)
+
+        # 构建时间字符串，确保小时和分钟始终是两位数
+        return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+    # 新增方法
+    def update_serve_times(self, start_time, end_time):
+        """
+        更新服务开始和结束时间，并计算服务时长。
+        """
+
+        if start_time and end_time:
+            # 计算服务时长（以秒为单位）
+            duration = (end_time - start_time).total_seconds()
+            self.serve_duration = int(duration)
+        else:
+            self.serve_duration = 0
+
+        
+
+        # # 保存更改到数据库
+        # self.save()
+
+    def update_serve_start_time(self):
+        """
+        更新服务开始时间为当前时间。
+        """
+        self.serve_start_time = time_now()
+        # self.save()
+
+    def update_serve_end_time(self):
+        """
+        更新服务结束时间为当前时间，并更新服务时长。
+        """
+        self.serve_end_time = time_now()
+
+        # 自动更新服务时长
+        self.update_serve_times(self.serve_start_time, self.serve_end_time)
+        # self.save()
+
+
 
 # 正在服务的队列，存放所有正在服务的房间对象
 class ServingQueue(models.Model):
@@ -99,7 +165,8 @@ class ServingQueue(models.Model):
         room.state = 1
         room.scheduling_num += 1
         self.room_list.append(room)
-        self.room_list.sort(key=lambda x: (x.fan_speed))  # 按照风速排序,服务队列中风速优先
+        self.room_list.sort(key=lambda x: (-x.fan_speed, -x.serve_time))
+        # self.room_list.sort(key=lambda x: (x.fan_speed))  # 按照风速排序,服务队列中风速优先
         self.serving_num += 1
         # logger.info(f'insert room, room_id{room.room_id},room_fee{room.fee}')
         return True
@@ -118,7 +185,8 @@ class ServingQueue(models.Model):
             if room.room_id == room_id:
                 room.fan_speed = fan_speed
                 room.fee_rate = fee_rate
-                self.room_list.sort(key=lambda x: (x.fan_speed))  # 按照风速排序,服务队列中风速优先
+                self.room_list.sort(key=lambda x: (-x.fan_speed, -x.serve_time))
+                # self.room_list.sort(key=lambda x: (x.fan_speed))  # 按照风速排序,服务队列中风速优先
                 break
         return True
 
@@ -130,6 +198,9 @@ class ServingQueue(models.Model):
         """
         self.room_list.remove(room)
         self.serving_num -= 1
+
+        # 新增代码
+        Scheduler.write_end_time(room.room_id)
         return True
 
     def update_serve_time(self):
@@ -201,6 +272,8 @@ class WaitingQueue(models.Model):
             if room.room_id == room_id:
                 room.fan_speed = fan_speed
                 room.fee_rate = fee_rate
+
+                self.room_list.sort(key=lambda x: (x.fan_speed, -x.serve_time))
                 break
         return True
 
@@ -220,6 +293,8 @@ class WaitingQueue(models.Model):
         room.scheduling_num += 1
         self.room_list.append(room)
         self.waiting_num += 1
+
+        self.room_list.sort(key=lambda x: (x.fan_speed, -x.serve_time))
         return True
 
     def update_wait_time(self):
@@ -342,7 +417,7 @@ class Scheduler(models.Model):
 
                 return_room = room
                 #  写入数据库
-                room.request_time = timezone.now()
+                room.request_time = time_now()
                 room.request_id = self.request_id
                 self.request_id += 1
                 room.operation = 3
@@ -358,12 +433,15 @@ class Scheduler(models.Model):
             self.rooms.append(temp_room)
             if self.SQ.serving_num < 3:  # 服务队列未满
                 self.SQ.insert(temp_room)
+
+                # 新增 更新服务开始时间
+                temp_room.update_serve_start_time()
             else:  # 服务队列已满
                 self.WQ.insert(temp_room)
 
             return_room = temp_room
             #  写入数据库
-            temp_room.request_time = timezone.now()
+            temp_room.request_time = time_now()
             self.request_id += 1
             temp_room.operation = 3
             temp_room.save(force_insert=True)
@@ -398,12 +476,12 @@ class Scheduler(models.Model):
                 else:
                     room.target_temp = target_temp
 
-                # 写入数据库
-                room.request_id = self.request_id
-                self.request_id += 1
-                room.operation = 1
-                room.request_time = timezone.now()
-                room.save(force_insert=True)
+                # # 写入数据库
+                # room.request_id = self.request_id
+                # self.request_id += 1
+                # room.operation = 1
+                # room.request_time = time_now()
+                # room.save(force_insert=True)
 
                 return room
 
@@ -426,8 +504,14 @@ class Scheduler(models.Model):
             if room.room_id == room_id:
                 if room.state == 1:  # 在调度队列中
                     self.SQ.set_fan_speed(room_id, fan_speed, fee_rate)
+
+                    # 新增代码
+                    Scheduler.write_end_time(room_id)
                 elif room.state == 2:  # 在等待队列中
                     self.WQ.set_fan_speed(room_id, fan_speed, fee_rate)
+
+                    # 新增
+                    room.update_serve_start_time()
                 else:
                     room.fan_speed = fan_speed
                     room.fee_rate = fee_rate
@@ -435,7 +519,7 @@ class Scheduler(models.Model):
                 room.request_id = self.request_id
                 self.request_id += 1
                 room.operation = 2
-                room.request_time = timezone.now()
+                room.request_time = time_now()
                 room.save(force_insert=True)
 
                 return room
@@ -509,7 +593,10 @@ class Scheduler(models.Model):
                 room.request_id = self.request_id
                 self.request_id += 1
                 room.operation = 4
-                room.request_time = timezone.now()
+                room.request_time = time_now()
+
+                room.update_serve_start_time()
+                room.update_serve_end_time()
                 room.save(force_insert=True)
 
                 # 开启调度函数
@@ -595,12 +682,29 @@ class Scheduler(models.Model):
         :return:
         """
         if self.WQ.waiting_num != 0 and self.SQ.serving_num == 3:
+            if self.SQ.room_list[0].fan_speed > self.WQ.room_list[0].fan_speed:
+                temp = self.SQ.room_list[0]
+                self.SQ.delete_room(temp)
+                self.WQ.insert(temp)
+                temp = self.WQ.room_list[0]
+                self.WQ.delete_room(temp)
+                self.SQ.insert(temp)
+            elif self.SQ.room_list[0].fan_speed == self.WQ.room_list[0].fan_speed:
+                if self.SQ.room_list[0].wait_time >=2:
+                    temp = self.SQ.room_list[0]
+                    self.SQ.delete_room(temp)
+                    self.WQ.insert(temp)
+                    temp = self.WQ.room_list[0]
+                    self.WQ.delete_room(temp)
+                    self.SQ.insert(temp)
+            '''
             temp = self.SQ.room_list[0]
             self.SQ.delete_room(temp)
             self.WQ.insert(temp)
             temp = self.WQ.room_list[0]
             self.WQ.delete_room(temp)
             self.SQ.insert(temp)
+            '''
 
         elif self.WQ.waiting_num != 0 and self.SQ.serving_num == 2:
             temp = self.WQ.room_list[0]
@@ -614,7 +718,7 @@ class Scheduler(models.Model):
                     self.WQ.delete_room(temp)
                     self.SQ.insert(temp)
                 i += 1
-
+        '''感觉没用
         elif self.WQ.waiting_num != 0 and self.SQ.serving_num <= 0:
             i = 1
             for temp in self.WQ.room_list:
@@ -622,8 +726,34 @@ class Scheduler(models.Model):
                     self.WQ.delete_room(temp)
                     self.SQ.insert(temp)
                 i += 1
+        '''
         timer = threading.Timer(120, self.scheduling)  # 每2min执行一次调度函数
         timer.start()
+
+    # 新增方法
+    @staticmethod
+    def write_end_time(room_id):
+        """
+        收到调风请求以后 更新该房间上一个请求的结束时间 并更新其持续时间
+        """
+        rdr = Room.objects.filter(
+            room_id=room_id, 
+            ).order_by('-request_time')[0]
+        rdr.update_serve_end_time()
+        rdr.save()
+
+    # 新增方法
+    @staticmethod
+    def write_start_time(room_id):
+        """
+        更新该房间请求的开始时间
+        """
+        rdr = Room.objects.filter(
+            room_id=room_id, 
+            ).order_by('-request_time')[0]
+        rdr.update_serve_start_time()
+        rdr.save()
+
 
 
 # 读取数据库用，读取信息，为前台生成账单，详单
@@ -644,6 +774,13 @@ class StatisticController(models.Model):
         """
 
     @staticmethod
+    def no_timezone_time(date):
+        try:
+            return date.replace(tzinfo=None)
+        except:
+            return date
+
+    @staticmethod
     def create_rdr(room_id, begin_date, end_date):
         """
         打印详单
@@ -657,17 +794,28 @@ class StatisticController(models.Model):
         for r in rdr:
             dic = {}
             dic.update(request_id=r.request_id,
-                       request_time=r.request_time,
-                       room_id=r.room_id,
-                       operation=r.get_operation_display(),
-                       current_temp=r.current_temp,
-                       target_temp=r.target_temp,
-                       fan_speed=r.get_fan_speed_display(),
-                       fee=r.fee)
+                    room_id=r.room_id,
+                    request_time=StatisticController.no_timezone_time(r.request_time),
+
+                    # 新增
+                    serve_start_time=StatisticController.no_timezone_time(r.serve_start_time),
+                    serve_end_time=StatisticController.no_timezone_time(r.serve_end_time),
+                    serve_duration=r.serve_duration_times(),
+                    
+                    fan_speed=r.get_fan_speed_display(),
+                    fee=r.fee,
+                    fee_rate=r.fee_rate,
+
+                    operation=r.get_operation_display(),
+                    current_temp=r.current_temp,
+                    target_temp=r.target_temp,
+                    )
             detail.append(dic)
 
         for d in detail:
             print(d)
+
+        logger.info(detail)
         return detail
 
     @staticmethod
@@ -680,27 +828,68 @@ class StatisticController(models.Model):
         :return:    返回详单字典列表
         """
         rdr = StatisticController.create_rdr(room_id, begin_date, end_date)
-        import csv
+
         # 文件头，一般就是数据名
         file_header = ["request_id",
-                       "request_time",
                        "room_id",
+                       "request_time",
+
+                       # 新增
+                       "serve_start_time",
+                       "serve_end_time",
+                       "serve_duration",
+
+                       "fan_speed",
+                       "fee",
+                       "fee_rate",
+
                        "operation",
                        "current_temp",
-                       "target_temp",
-                       "fan_speed",
-                       "fee"]
+                       "target_temp"
+                       ]
 
-        # 写入数据
-        with open("./result/detailed_list.csv", "w") as csvFile:
-            writer = csv.DictWriter(csvFile, file_header)
-            writer.writeheader()
-            # 写入的内容都是以列表的形式传入函数
-            for d in rdr:
-                writer.writerow(d)
+        # 将数据转换为DataFrame
+        df = pd.DataFrame(rdr)
+        # 使用文件头设置列名
+        df.columns = file_header
 
-            csvFile.close()
-            return True
+        if os.path.exists('./result/detailed_list.xlsx'):
+            os.remove('./result/detailed_list.xlsx')
+        # 将DataFrame写入Excel文件
+        df.to_excel('./result/detailed_list.xlsx', index=False)
+
+
+        return True
+
+    
+    @staticmethod
+    def get_checkin_time(room_id, begin_date, end_date):
+        """
+        获取这段时间内 该房间第一次开机的时间
+        """
+        rdr = Room.objects.filter(
+            room_id=room_id, 
+            request_time__range=(begin_date, end_date),
+            operation='3'
+            ) \
+            .order_by('request_time')[0]
+        print(rdr.request_time)
+        return rdr.request_time
+    
+    @staticmethod
+    def get_checkout_time(room_id, begin_date, end_date):
+        """
+        获取这段时间内 该房间最后一次关机的时间
+        """
+        rdr = Room.objects.filter(
+            room_id=room_id, 
+            request_time__range=(begin_date, end_date),
+            operation='4'
+            ) \
+            .order_by('-request_time')[0]
+        print(rdr.request_time)
+        return rdr.request_time
+
 
     @staticmethod
     def create_bill(room_id, begin_date, end_date):
@@ -714,8 +903,13 @@ class StatisticController(models.Model):
         bill = Room.objects.filter(room_id=room_id, request_time__range=(begin_date, end_date)) \
             .order_by('-request_time')[0]
         print("fee=%f" % bill.fee)
+        """
+        这里入住时间和离开时间要修改成第一次开机时间和最后一次关机时间"""
+        checkin_time = StatisticController.get_checkin_time(room_id, begin_date, end_date)
 
-        return bill.fee
+        checkout_time = StatisticController.get_checkout_time(room_id, begin_date, end_date)
+
+        return bill.fee, checkin_time, checkout_time
 
     @staticmethod
     def print_bill(room_id, begin_date, end_date):
@@ -726,12 +920,25 @@ class StatisticController(models.Model):
         :param end_date: endDay
         :return:返回房间的账单费用
         """
-        fee = StatisticController.create_bill(room_id, begin_date, end_date)
+        fee, checkin_time, checkout_time= StatisticController.create_bill(room_id, begin_date, end_date)
 
-        with open('./result/bill.csv', 'w') as csv_file:
-            writer = csv.writer(csv_file)
-            writer.writerow(["room_id", "fee"])
-            writer.writerow([room_id, fee])
+        # 定义表头和数据行
+        header = ["room_id", "fee", "check-in time", "check-out time"]
+        data_rows = [
+            [room_id, fee, checkin_time.strftime('%Y-%m-%d %H:%M:%S'),  checkout_time.strftime('%Y-%m-%d %H:%M:%S')],
+        ]
+
+
+        # 创建一个包含表头和数据的DataFrame
+        df = pd.DataFrame(data_rows, columns=header)
+                    
+        # 如果文件已经存在，则删除它
+        if os.path.exists('./result/bill.xlsx'):
+            os.remove('./result/bill.xlsx')
+        # 将DataFrame写入Excel文件
+        df.to_excel('./result/bill.xlsx', index=False)
+
+
         return fee
 
     @staticmethod
@@ -908,7 +1115,7 @@ from django.utils import timezone
 
 
 def current_time():
-    return timezone.now().time()
+    return time_now().time()
 
 
 class Message(models.Model):

@@ -66,10 +66,10 @@ def reception(request):
 
         # 获取详单，返回生成的文件
         from django.http import FileResponse
-        file = open('./result/detailed_list.csv', 'rb')
+        file = open('./result/detailed_list.xlsx', 'rb')
         response = FileResponse(file)
         response['Content-Type'] = 'application/octet-stream'
-        response['Content-Disposition'] = 'attachment;filename="detailed_list.csv"'
+        response['Content-Disposition'] = 'attachment;filename="detailed_list.xlsx"'
         return response
     else:
         # # 打印账单
@@ -82,10 +82,10 @@ def reception(request):
 
         # 获取账单，返回生成的文件
         from django.http import FileResponse
-        file = open('./result/bill.csv', 'rb')
+        file = open('./result/bill.xlsx', 'rb')
         response = FileResponse(file)
         response['Content-Type'] = 'application/octet-stream'
-        response['Content-Disposition'] = 'attachment;filename="bill.csv"'
+        response['Content-Disposition'] = 'attachment;filename="bill.xlsx"'
         return response
 
 
