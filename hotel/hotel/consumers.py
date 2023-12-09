@@ -63,7 +63,7 @@ class RoomsInfo:  # 监控器使用
 
 class RoomBuffer:  # 房间数据缓存
     on_flag = [None, False, False, False, False, False]
-    target_temp = [32, 25, 25, 25, 25, 25]  # 不要用数组。。。。
+    target_temp = [32, 22, 22, 22, 22, 22]  # 不要用数组。。。。
     init_temp = [0, 30, 28, 30, 29, 35]
 
 

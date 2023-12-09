@@ -277,7 +277,7 @@
     <div class="air">
         <img src="/static/img/air-conditioning.png" alt="x" class="picture">
         <img class="pattern" src="/static/img/snow.png" alt="x">
-        <span class="font">25°C</span>
+        <span class="font">22°C</span>
         <span class="logo">☁</span>
         <span class="dot"></span>
     </div>
@@ -308,6 +308,10 @@
     </thead>
     <tbody>
     <tr>
+        <td>房间编号</td>
+        <td id="room_idd">No.1</td>
+    </tr>
+    <tr>
         <td>空调状态</td>
         <td id="condition_set">关机</td>
     </tr>
@@ -321,7 +325,7 @@
     </tr>
     <tr>
         <td>冷热模式</td>
-        <td id="fan_model">制冷</td>
+        <td id="fan_model">制热</td>
     </tr>
     <tr>
         <td>风速</td>
@@ -509,7 +513,7 @@
 
 
     // 创建WebSocket连接
-    socket = new WebSocket("ws://10.29.84.40:80/ws/some_path/");
+    socket = new WebSocket("ws://192.168.88.245:8000/ws/some_path/");
 
     // 定义要发送的数据
     function sendData(action) {

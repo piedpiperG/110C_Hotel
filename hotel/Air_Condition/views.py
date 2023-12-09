@@ -122,7 +122,7 @@ def manager_week(request):
     print(year)
     print(week)
     # 首先先生成周报
-    StatisticController.draw_report(-1, 2, year, week)
+    StatisticController.draw_report(-1, 2, year, week=week)
 
     # 获取周报，返回生成的文件
     from django.http import FileResponse
@@ -156,7 +156,7 @@ def report_printer(request):
         """打印周报"""
 
         # 首先先生成周报
-        StatisticController.print_report(room_id, 2, year, week)
+        StatisticController.print_report(room_id, 2, year, week=week)
 
         # 获取周报，返回生成的文件
         from django.http import FileResponse

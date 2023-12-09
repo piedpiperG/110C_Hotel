@@ -666,7 +666,7 @@ class Scheduler(models.Model):
         if room.state == 4:
             if mode == 1:
                 room.current_temp -= 0.008*6
-                if room.target_temp - room.current_temp > 1:
+                if abs(room.target_temp - room.current_temp) > 1:
                     if self.SQ.serving_num < 3:  # 服务队列没满
                         self.SQ.insert(room)
                     else:
@@ -701,7 +701,7 @@ class Scheduler(models.Model):
         """
         if self.SQ.serving_num != 0:
             for room in self.SQ.room_list:
-                if abs(room.current_temp - room.target_temp) < 0.1 or room.current_temp > room.target_temp:
+                if abs(room.current_temp - room.target_temp) < 0.1 or room.current_temp < room.target_temp:
                     room.state = 4
                     self.SQ.delete_room(room)
                     if self.default_target_temp == 22:
@@ -710,7 +710,7 @@ class Scheduler(models.Model):
                         self.back_temp(room, 2)
         if self.WQ.waiting_num != 0:
             for room in self.WQ.room_list:
-                if abs(room.current_temp - room.target_temp) < 0.1 or room.current_temp > room.target_temp:
+                if abs(room.current_temp - room.target_temp) < 0.1 or room.current_temp < room.target_temp:
                     room.state = 4
                     self.WQ.delete_room(room)
                     if self.default_target_temp == 22:
@@ -720,7 +720,7 @@ class Scheduler(models.Model):
 
         timer = threading.Timer(1, self.check_target_arrive)  # 每5秒执行一次check函数
         timer.start()
-    '''
+
     def scheduling(self):
         """
         调度算法
@@ -745,14 +745,14 @@ class Scheduler(models.Model):
                     temp = self.WQ.room_list[0]
                     self.WQ.delete_room(temp)
                     self.SQ.insert(temp)
-            
+            '''
             temp = self.SQ.room_list[0]
             self.SQ.delete_room(temp)
             self.WQ.insert(temp)
             temp = self.WQ.room_list[0]
             self.WQ.delete_room(temp)
             self.SQ.insert(temp)
-            
+            '''
 
         elif self.WQ.waiting_num != 0 and self.SQ.serving_num == 2:
             temp = self.WQ.room_list[0]
@@ -766,7 +766,7 @@ class Scheduler(models.Model):
                     self.WQ.delete_room(temp)
                     self.SQ.insert(temp)
                 i += 1
-        感觉没用
+        '''感觉没用
         elif self.WQ.waiting_num != 0 and self.SQ.serving_num <= 0:
             i = 1
             for temp in self.WQ.room_list:
@@ -774,11 +774,10 @@ class Scheduler(models.Model):
                     self.WQ.delete_room(temp)
                     self.SQ.insert(temp)
                 i += 1
-        
+        '''
         timer = threading.Timer(0.1, self.scheduling)  # 每1s执行一次调度函数
         timer.start()
-    '''
-
+'''
     def scheduling(self):
         """
         调度算法
@@ -815,9 +814,9 @@ class Scheduler(models.Model):
                     self.WQ.delete_room(temp)
                     self.SQ.insert(temp)
                 i += 1
-        timer = threading.Timer(20, self.scheduling)  # 每2min执行一次调度函数
+        timer = threading.Timer(120, self.scheduling)  # 每2min执行一次调度函数
         timer.start()
-
+        '''
 
     # 新增方法
     @staticmethod
